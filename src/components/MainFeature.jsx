@@ -408,6 +408,376 @@ const MainFeature = ({ activeTab }) => {
     </motion.div>
   )
 
+const renderCrops = () => {
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterFarm, setFilterFarm] = useState('')
+    const [filterStatus, setFilterStatus] = useState('')
+    const [filterCropType, setFilterCropType] = useState('')
+    const [sortBy, setSortBy] = useState('plantingDate')
+    const [sortOrder, setSortOrder] = useState('desc')
+
+    // Get farm name for a crop
+    const getFarmName = (farmId) => {
+      const farm = farms.find(f => f.id === farmId)
+      return farm ? farm.name : 'Unknown Farm'
+    }
+
+    // Filter and search crops
+    const filteredCrops = crops.filter(crop => {
+      const farmName = getFarmName(crop.farmId)
+      const matchesSearch = searchTerm === '' || 
+        crop.cropType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        crop.variety.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        farmName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (crop.notes && crop.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+      
+      const matchesFarm = filterFarm === '' || crop.farmId === filterFarm
+      const matchesStatus = filterStatus === '' || crop.status === filterStatus
+      const matchesCropType = filterCropType === '' || crop.cropType === filterCropType
+      
+      return matchesSearch && matchesFarm && matchesStatus && matchesCropType
+    }).sort((a, b) => {
+      let aValue, bValue
+      switch (sortBy) {
+        case 'cropType':
+          aValue = a.cropType
+          bValue = b.cropType
+          break
+        case 'plantingDate':
+          aValue = new Date(a.plantingDate)
+          bValue = new Date(b.plantingDate)
+          break
+        case 'expectedHarvestDate':
+          aValue = new Date(a.expectedHarvestDate)
+          bValue = new Date(b.expectedHarvestDate)
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        default:
+          aValue = a[sortBy]
+          bValue = b[sortBy]
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1
+      } else {
+        return aValue < bValue ? 1 : -1
+      }
+    })
+
+    const cropTypes = ['Corn', 'Wheat', 'Soybeans', 'Rice', 'Potatoes', 'Tomatoes', 'Carrots', 'Lettuce', 'Onions', 'Peppers']
+    const statusOptions = ['Planted', 'Growing', 'Harvested', 'Failed']
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">Crop Management</h2>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <ApperIcon name="Plus" className="h-4 w-4" />
+            <span>Add Crop</span>
+          </button>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <div className="relative">
+                <ApperIcon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+                <input
+                  type="text"
+                  placeholder="Search crops, varieties, farms..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-field pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Farm Filter */}
+            <select
+              value={filterFarm}
+              onChange={(e) => setFilterFarm(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Farms</option>
+              {farms.map(farm => (
+                <option key={farm.id} value={farm.id}>{farm.name}</option>
+              ))}
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Status</option>
+              {statusOptions.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+
+            {/* Crop Type Filter */}
+            <select
+              value={filterCropType}
+              onChange={(e) => setFilterCropType(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Types</option>
+              {cropTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort Options */}
+          <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <span className="text-sm font-medium text-surface-700 dark:text-surface-300">Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="input-field w-auto min-w-0"
+            >
+              <option value="plantingDate">Planting Date</option>
+              <option value="expectedHarvestDate">Harvest Date</option>
+              <option value="cropType">Crop Type</option>
+              <option value="status">Status</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
+            >
+              <span className="text-sm">{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+              <ApperIcon name={sortOrder === 'asc' ? 'ArrowUp' : 'ArrowDown'} className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="flex items-center justify-between">
+          <p className="text-surface-600 dark:text-surface-400">
+            {filteredCrops.length} crop{filteredCrops.length !== 1 ? 's' : ''} found
+          </p>
+          {(searchTerm || filterFarm || filterStatus || filterCropType) && (
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterFarm('')
+                setFilterStatus('')
+                setFilterCropType('')
+              }}
+              className="text-primary hover:text-primary-dark text-sm font-medium"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Crops Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCrops.map(crop => (
+            <div key={crop.id} className="farm-card p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-secondary to-accent rounded-xl flex items-center justify-center">
+                  <ApperIcon name="Wheat" className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEdit('crop', crop)}
+                    className="p-2 text-surface-600 hover:text-primary transition-colors"
+                  >
+                    <ApperIcon name="Edit2" className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete('crop', crop.id)}
+                    className="p-2 text-surface-600 hover:text-red-500 transition-colors"
+                  >
+                    <ApperIcon name="Trash2" className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-1">
+                {crop.cropType}
+              </h3>
+              <p className="text-surface-600 dark:text-surface-400 mb-2">{crop.variety}</p>
+              <p className="text-sm text-surface-500 dark:text-surface-500 mb-3">
+                {getFarmName(crop.farmId)}
+              </p>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Planted:</span>
+                  <span className="text-surface-900 dark:text-surface-100">
+                    {format(new Date(crop.plantingDate), 'MMM dd, yyyy')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Expected Harvest:</span>
+                  <span className="text-surface-900 dark:text-surface-100">
+                    {format(new Date(crop.expectedHarvestDate), 'MMM dd, yyyy')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  crop.status === 'Growing' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                  crop.status === 'Planted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                  crop.status === 'Harvested' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                  'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                }`}>
+                  {crop.status}
+                </span>
+              </div>
+              
+              {crop.notes && (
+                <p className="text-sm text-surface-600 dark:text-surface-400 mt-3 p-2 bg-surface-50 dark:bg-surface-700 rounded-lg">
+                  {crop.notes}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {filteredCrops.length === 0 && (
+          <div className="text-center py-12">
+            <ApperIcon name="Wheat" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
+              No crops found
+            </h3>
+            <p className="text-surface-600 dark:text-surface-400 mb-4">
+              {searchTerm || filterFarm || filterStatus || filterCropType 
+                ? 'Try adjusting your search or filters'
+                : 'Start by adding your first crop'
+              }
+            </p>
+            {!(searchTerm || filterFarm || filterStatus || filterCropType) && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn-primary"
+              >
+                Add Your First Crop
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add/Edit Crop Modal */}
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              >
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  {editingItem ? 'Edit Crop' : 'Add New Crop'}
+                </h3>
+                <div className="space-y-4">
+                  <select
+                    value={formData.farmId || ''}
+                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Farm</option>
+                    {farms.map(farm => (
+                      <option key={farm.id} value={farm.id}>{farm.name}</option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={formData.cropType || ''}
+                    onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Crop Type</option>
+                    {cropTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  
+                  <input
+                    type="text"
+                    placeholder="Variety"
+                    value={formData.variety || ''}
+                    onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
+                    className="input-field"
+                  />
+                  
+                  <input
+                    type="date"
+                    placeholder="Planting Date"
+                    value={formData.plantingDate ? format(new Date(formData.plantingDate), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setFormData({ ...formData, plantingDate: new Date(e.target.value) })}
+                    className="input-field"
+                  />
+                  
+                  <input
+                    type="date"
+                    placeholder="Expected Harvest Date"
+                    value={formData.expectedHarvestDate ? format(new Date(formData.expectedHarvestDate), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setFormData({ ...formData, expectedHarvestDate: new Date(e.target.value) })}
+                    className="input-field"
+                  />
+                  
+                  <select
+                    value={formData.status || 'Planted'}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="input-field"
+                  >
+                    {statusOptions.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                  
+                  <textarea
+                    placeholder="Notes (optional)"
+                    value={formData.notes || ''}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="input-field h-20 resize-none"
+                  />
+                </div>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => editingItem ? handleUpdate('crop') : handleAdd('crop')}
+                    className="btn-primary flex-1"
+                  >
+                    {editingItem ? 'Update' : 'Add'} Crop
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    )
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -415,21 +785,7 @@ const MainFeature = ({ activeTab }) => {
       case 'farms':
         return renderFarms()
       case 'crops':
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12"
-          >
-            <ApperIcon name="Wheat" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
-              Crop Management
-            </h3>
-            <p className="text-surface-600 dark:text-surface-400">
-              Coming soon - Track your crop lifecycles and growth stages
-            </p>
-          </motion.div>
-        )
+        return renderCrops()
       case 'tasks':
         return (
           <motion.div
