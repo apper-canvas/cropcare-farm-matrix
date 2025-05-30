@@ -1250,6 +1250,8 @@ const renderTasks = () => {
         </AnimatePresence>
       </motion.div>
     )
+}
+
 const renderExpenses = () => {
     // Get farm name for an expense
     const getFarmName = (farmId) => {
