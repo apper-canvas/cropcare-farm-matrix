@@ -73,6 +73,15 @@ const MainFeature = ({ activeTab }) => {
   const [sortBy, setSortBy] = useState('plantingDate')
   const [sortOrder, setSortOrder] = useState('desc')
 
+// Tasks search and filter states
+  const [taskSearchTerm, setTaskSearchTerm] = useState('')
+  const [taskFilterFarm, setTaskFilterFarm] = useState('')
+  const [taskFilterCrop, setTaskFilterCrop] = useState('')
+  const [taskFilterPriority, setTaskFilterPriority] = useState('')
+  const [taskFilterStatus, setTaskFilterStatus] = useState('')
+  const [taskFilterType, setTaskFilterType] = useState('')
+  const [taskSortBy, setTaskSortBy] = useState('dueDate')
+  const [taskSortOrder, setTaskSortOrder] = useState('asc')
   const resetForm = () => {
     setFormData({})
     setEditingItem(null)
@@ -778,6 +787,460 @@ const renderCrops = () => {
       </motion.div>
     )
   }
+const renderTasks = () => {
+    // Get farm and crop names for a task
+    const getFarmName = (farmId) => {
+      const farm = farms.find(f => f.id === farmId)
+      return farm ? farm.name : 'Unknown Farm'
+    }
+
+    const getCropName = (cropId) => {
+      const crop = crops.find(c => c.id === cropId)
+      return crop ? `${crop.cropType} (${crop.variety})` : 'No Crop Assigned'
+    }
+
+    // Filter and search tasks
+    const filteredTasks = tasks.filter(task => {
+      const farmName = getFarmName(task.farmId)
+      const cropName = getCropName(task.cropId)
+      const matchesSearch = taskSearchTerm === '' || 
+        task.title.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+        task.description.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+        farmName.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+        cropName.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+        task.taskType.toLowerCase().includes(taskSearchTerm.toLowerCase())
+      
+      const matchesFarm = taskFilterFarm === '' || task.farmId === taskFilterFarm
+      const matchesCrop = taskFilterCrop === '' || task.cropId === taskFilterCrop
+      const matchesPriority = taskFilterPriority === '' || task.priority === taskFilterPriority
+      const matchesStatus = taskFilterStatus === '' || 
+        (taskFilterStatus === 'completed' && task.completed) ||
+        (taskFilterStatus === 'pending' && !task.completed)
+      const matchesType = taskFilterType === '' || task.taskType === taskFilterType
+      
+      return matchesSearch && matchesFarm && matchesCrop && matchesPriority && matchesStatus && matchesType
+    }).sort((a, b) => {
+      let aValue, bValue
+      switch (taskSortBy) {
+        case 'dueDate':
+          aValue = new Date(a.dueDate)
+          bValue = new Date(b.dueDate)
+          break
+        case 'priority':
+          const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 }
+          aValue = priorityOrder[a.priority]
+          bValue = priorityOrder[b.priority]
+          break
+        case 'title':
+          aValue = a.title
+          bValue = b.title
+          break
+        case 'completed':
+          aValue = a.completed ? 1 : 0
+          bValue = b.completed ? 1 : 0
+          break
+        default:
+          aValue = a[taskSortBy]
+          bValue = b[taskSortBy]
+      }
+      
+      if (taskSortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1
+      } else {
+        return aValue < bValue ? 1 : -1
+      }
+    })
+
+    const priorityOptions = ['Low', 'Medium', 'High']
+    const taskTypes = ['Planting', 'Watering', 'Fertilizing', 'Pest Control', 'Harvesting', 'Maintenance', 'Monitoring', 'Other']
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">Task Management</h2>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <ApperIcon name="Plus" className="h-4 w-4" />
+            <span>Add Task</span>
+          </button>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <div className="relative">
+                <ApperIcon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+                <input
+                  type="text"
+                  placeholder="Search tasks, farms, crops..."
+                  value={taskSearchTerm}
+                  onChange={(e) => setTaskSearchTerm(e.target.value)}
+                  className="input-field pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Farm Filter */}
+            <select
+              value={taskFilterFarm}
+              onChange={(e) => setTaskFilterFarm(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Farms</option>
+              {farms.map(farm => (
+                <option key={farm.id} value={farm.id}>{farm.name}</option>
+              ))}
+            </select>
+
+            {/* Crop Filter */}
+            <select
+              value={taskFilterCrop}
+              onChange={(e) => setTaskFilterCrop(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Crops</option>
+              {crops.map(crop => (
+                <option key={crop.id} value={crop.id}>{crop.cropType} ({crop.variety})</option>
+              ))}
+            </select>
+
+            {/* Priority Filter */}
+            <select
+              value={taskFilterPriority}
+              onChange={(e) => setTaskFilterPriority(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Priorities</option>
+              {priorityOptions.map(priority => (
+                <option key={priority} value={priority}>{priority}</option>
+              ))}
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={taskFilterStatus}
+              onChange={(e) => setTaskFilterStatus(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          {/* Second row of filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {/* Task Type Filter */}
+            <select
+              value={taskFilterType}
+              onChange={(e) => setTaskFilterType(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Types</option>
+              {taskTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+
+            {/* Sort Options */}
+            <select
+              value={taskSortBy}
+              onChange={(e) => setTaskSortBy(e.target.value)}
+              className="input-field"
+            >
+              <option value="dueDate">Due Date</option>
+              <option value="priority">Priority</option>
+              <option value="title">Title</option>
+              <option value="completed">Status</option>
+            </select>
+
+            <button
+              onClick={() => setTaskSortOrder(taskSortOrder === 'asc' ? 'desc' : 'asc')}
+              className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
+            >
+              <span className="text-sm">{taskSortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+              <ApperIcon name={taskSortOrder === 'asc' ? 'ArrowUp' : 'ArrowDown'} className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="flex items-center justify-between">
+          <p className="text-surface-600 dark:text-surface-400">
+            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
+          </p>
+          {(taskSearchTerm || taskFilterFarm || taskFilterCrop || taskFilterPriority || taskFilterStatus || taskFilterType) && (
+            <button
+              onClick={() => {
+                setTaskSearchTerm('')
+                setTaskFilterFarm('')
+                setTaskFilterCrop('')
+                setTaskFilterPriority('')
+                setTaskFilterStatus('')
+                setTaskFilterType('')
+              }}
+              className="text-primary hover:text-primary-dark text-sm font-medium"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Tasks Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTasks.map(task => (
+            <div key={task.id} className={`farm-card p-6 ${task.completed ? 'opacity-75' : ''}`}>
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  task.priority === 'High' ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                  task.priority === 'Medium' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600' :
+                  'bg-gradient-to-br from-green-500 to-green-600'
+                }`}>
+                  <ApperIcon name="CheckSquare" className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => toggleTaskComplete(task.id)}
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      task.completed
+                        ? 'bg-primary border-primary text-white'
+                        : 'border-surface-300 dark:border-surface-600 hover:border-primary'
+                    }`}
+                  >
+                    {task.completed && <ApperIcon name="Check" className="h-3 w-3" />}
+                  </button>
+                  <button
+                    onClick={() => handleEdit('task', task)}
+                    className="p-1 text-surface-600 hover:text-primary transition-colors"
+                  >
+                    <ApperIcon name="Edit2" className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete('task', task.id)}
+                    className="p-1 text-surface-600 hover:text-red-500 transition-colors"
+                  >
+                    <ApperIcon name="Trash2" className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <h3 className={`text-lg font-semibold mb-2 ${
+                task.completed 
+                  ? 'line-through text-surface-500 dark:text-surface-500' 
+                  : 'text-surface-900 dark:text-surface-100'
+              }`}>
+                {task.title}
+              </h3>
+              
+              <p className="text-surface-600 dark:text-surface-400 mb-3 text-sm">
+                {task.description}
+              </p>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Farm:</span>
+                  <span className="text-surface-900 dark:text-surface-100">
+                    {getFarmName(task.farmId)}
+                  </span>
+                </div>
+                {task.cropId && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-surface-600 dark:text-surface-400">Crop:</span>
+                    <span className="text-surface-900 dark:text-surface-100">
+                      {getCropName(task.cropId)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Due:</span>
+                  <span className={`font-medium ${
+                    new Date(task.dueDate) < new Date() && !task.completed
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-surface-900 dark:text-surface-100'
+                  }`}>
+                    {format(new Date(task.dueDate), 'MMM dd, yyyy')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Type:</span>
+                  <span className="text-surface-900 dark:text-surface-100">
+                    {task.taskType}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  task.priority === 'High' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                  task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                  'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                }`}>
+                  {task.priority}
+                </span>
+                
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  task.completed 
+                    ? 'bg-primary/20 text-primary dark:bg-primary/30' 
+                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                }`}>
+                  {task.completed ? 'Completed' : 'Pending'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredTasks.length === 0 && (
+          <div className="text-center py-12">
+            <ApperIcon name="CheckSquare" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
+              No tasks found
+            </h3>
+            <p className="text-surface-600 dark:text-surface-400 mb-4">
+              {taskSearchTerm || taskFilterFarm || taskFilterCrop || taskFilterPriority || taskFilterStatus || taskFilterType
+                ? 'Try adjusting your search or filters'
+                : 'Start by adding your first task'
+              }
+            </p>
+            {!(taskSearchTerm || taskFilterFarm || taskFilterCrop || taskFilterPriority || taskFilterStatus || taskFilterType) && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn-primary"
+              >
+                Add Your First Task
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add/Edit Task Modal */}
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              >
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  {editingItem ? 'Edit Task' : 'Add New Task'}
+                </h3>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Task Title"
+                    value={formData.title || ''}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="input-field"
+                  />
+                  
+                  <textarea
+                    placeholder="Task Description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="input-field h-20 resize-none"
+                  />
+                  
+                  <select
+                    value={formData.farmId || ''}
+                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Farm</option>
+                    {farms.map(farm => (
+                      <option key={farm.id} value={farm.id}>{farm.name}</option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={formData.cropId || ''}
+                    onChange={(e) => setFormData({ ...formData, cropId: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Crop (Optional)</option>
+                    {crops.filter(crop => !formData.farmId || crop.farmId === formData.farmId).map(crop => (
+                      <option key={crop.id} value={crop.id}>{crop.cropType} ({crop.variety})</option>
+                    ))}
+                  </select>
+                  
+                  <input
+                    type="date"
+                    placeholder="Due Date"
+                    value={formData.dueDate ? format(new Date(formData.dueDate), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setFormData({ ...formData, dueDate: new Date(e.target.value) })}
+                    className="input-field"
+                  />
+                  
+                  <select
+                    value={formData.priority || 'Medium'}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                    className="input-field"
+                  >
+                    {priorityOptions.map(priority => (
+                      <option key={priority} value={priority}>{priority}</option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={formData.taskType || 'Other'}
+                    onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
+                    className="input-field"
+                  >
+                    {taskTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  
+                  {editingItem && (
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="completed"
+                        checked={formData.completed || false}
+                        onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
+                        className="w-4 h-4 text-primary bg-surface-100 border-surface-300 rounded focus:ring-primary focus:ring-2"
+                      />
+                      <label htmlFor="completed" className="text-surface-900 dark:text-surface-100">
+                        Mark as completed
+                      </label>
+                    </div>
+                  )}
+                </div>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => editingItem ? handleUpdate('task') : handleAdd('task')}
+                    className="btn-primary flex-1"
+                  >
+                    {editingItem ? 'Update' : 'Add'} Task
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    )
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -787,22 +1250,7 @@ const renderCrops = () => {
         return renderFarms()
       case 'crops':
         return renderCrops()
-      case 'tasks':
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12"
-          >
-            <ApperIcon name="CheckSquare" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
-              Task Management
-            </h3>
-            <p className="text-surface-600 dark:text-surface-400">
-              Coming soon - Schedule and track your farming tasks
-            </p>
-          </motion.div>
-        )
+return renderTasks()
       case 'expenses':
         return (
           <motion.div
