@@ -82,6 +82,16 @@ const MainFeature = ({ activeTab }) => {
   const [taskFilterType, setTaskFilterType] = useState('')
   const [taskSortBy, setTaskSortBy] = useState('dueDate')
   const [taskSortOrder, setTaskSortOrder] = useState('asc')
+// Expenses search and filter states
+  const [expenseSearchTerm, setExpenseSearchTerm] = useState('')
+  const [expenseFilterFarm, setExpenseFilterFarm] = useState('')
+  const [expenseFilterCategory, setExpenseFilterCategory] = useState('')
+  const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('')
+  const [expenseFilterDateTo, setExpenseFilterDateTo] = useState('')
+  const [expenseFilterAmountMin, setExpenseFilterAmountMin] = useState('')
+  const [expenseFilterAmountMax, setExpenseFilterAmountMax] = useState('')
+  const [expenseSortBy, setExpenseSortBy] = useState('date')
+  const [expenseSortOrder, setExpenseSortOrder] = useState('desc')
   const resetForm = () => {
     setFormData({})
     setEditingItem(null)
@@ -1240,7 +1250,406 @@ const renderTasks = () => {
         </AnimatePresence>
       </motion.div>
     )
-  }
+const renderExpenses = () => {
+    // Get farm name for an expense
+    const getFarmName = (farmId) => {
+      const farm = farms.find(f => f.id === farmId)
+      return farm ? farm.name : 'Unknown Farm'
+    }
+
+    // Filter and search expenses
+    const filteredExpenses = expenses.filter(expense => {
+      const farmName = getFarmName(expense.farmId)
+      const matchesSearch = expenseSearchTerm === '' || 
+        expense.description.toLowerCase().includes(expenseSearchTerm.toLowerCase()) ||
+        expense.category.toLowerCase().includes(expenseSearchTerm.toLowerCase()) ||
+        farmName.toLowerCase().includes(expenseSearchTerm.toLowerCase())
+      
+      const matchesFarm = expenseFilterFarm === '' || expense.farmId === expenseFilterFarm
+      const matchesCategory = expenseFilterCategory === '' || expense.category === expenseFilterCategory
+      
+      const expenseDate = new Date(expense.date)
+      const matchesDateFrom = expenseFilterDateFrom === '' || expenseDate >= new Date(expenseFilterDateFrom)
+      const matchesDateTo = expenseFilterDateTo === '' || expenseDate <= new Date(expenseFilterDateTo)
+      
+      const matchesAmountMin = expenseFilterAmountMin === '' || expense.amount >= parseFloat(expenseFilterAmountMin)
+      const matchesAmountMax = expenseFilterAmountMax === '' || expense.amount <= parseFloat(expenseFilterAmountMax)
+      
+      return matchesSearch && matchesFarm && matchesCategory && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax
+    }).sort((a, b) => {
+      let aValue, bValue
+      switch (expenseSortBy) {
+        case 'date':
+          aValue = new Date(a.date)
+          bValue = new Date(b.date)
+          break
+        case 'amount':
+          aValue = a.amount
+          bValue = b.amount
+          break
+        case 'category':
+          aValue = a.category
+          bValue = b.category
+          break
+        case 'description':
+          aValue = a.description
+          bValue = b.description
+          break
+        default:
+          aValue = a[expenseSortBy]
+          bValue = b[expenseSortBy]
+      }
+      
+      if (expenseSortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1
+      } else {
+        return aValue < bValue ? 1 : -1
+      }
+    })
+
+    const expenseCategories = ['Seeds', 'Fertilizer', 'Pesticides', 'Equipment', 'Fuel', 'Labor', 'Water', 'Maintenance', 'Insurance', 'Land Rent', 'Storage', 'Transportation', 'Marketing', 'Other']
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">Expense Management</h2>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <ApperIcon name="Plus" className="h-4 w-4" />
+            <span>Add Expense</span>
+          </button>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <div className="relative">
+                <ApperIcon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+                <input
+                  type="text"
+                  placeholder="Search expenses, categories, farms..."
+                  value={expenseSearchTerm}
+                  onChange={(e) => setExpenseSearchTerm(e.target.value)}
+                  className="input-field pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Farm Filter */}
+            <select
+              value={expenseFilterFarm}
+              onChange={(e) => setExpenseFilterFarm(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Farms</option>
+              {farms.map(farm => (
+                <option key={farm.id} value={farm.id}>{farm.name}</option>
+              ))}
+            </select>
+
+            {/* Category Filter */}
+            <select
+              value={expenseFilterCategory}
+              onChange={(e) => setExpenseFilterCategory(e.target.value)}
+              className="input-field"
+            >
+              <option value="">All Categories</option>
+              {expenseCategories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Second row of filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            {/* Date From */}
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">From Date</label>
+              <input
+                type="date"
+                value={expenseFilterDateFrom}
+                onChange={(e) => setExpenseFilterDateFrom(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">To Date</label>
+              <input
+                type="date"
+                value={expenseFilterDateTo}
+                onChange={(e) => setExpenseFilterDateTo(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            {/* Amount Min */}
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Min Amount</label>
+              <input
+                type="number"
+                placeholder="0"
+                value={expenseFilterAmountMin}
+                onChange={(e) => setExpenseFilterAmountMin(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            {/* Amount Max */}
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Max Amount</label>
+              <input
+                type="number"
+                placeholder="1000"
+                value={expenseFilterAmountMax}
+                onChange={(e) => setExpenseFilterAmountMax(e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          {/* Sort Options */}
+          <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <span className="text-sm font-medium text-surface-700 dark:text-surface-300">Sort by:</span>
+            <select
+              value={expenseSortBy}
+              onChange={(e) => setExpenseSortBy(e.target.value)}
+              className="input-field w-auto min-w-0"
+            >
+              <option value="date">Date</option>
+              <option value="amount">Amount</option>
+              <option value="category">Category</option>
+              <option value="description">Description</option>
+            </select>
+            <button
+              onClick={() => setExpenseSortOrder(expenseSortOrder === 'asc' ? 'desc' : 'asc')}
+              className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
+            >
+              <span className="text-sm">{expenseSortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+              <ApperIcon name={expenseSortOrder === 'asc' ? 'ArrowUp' : 'ArrowDown'} className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Results Count and Total */}
+        <div className="flex items-center justify-between">
+          <p className="text-surface-600 dark:text-surface-400">
+            {filteredExpenses.length} expense{filteredExpenses.length !== 1 ? 's' : ''} found
+            {filteredExpenses.length > 0 && (
+              <span className="ml-2 font-semibold">
+                (Total: ${filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0).toFixed(2)})
+              </span>
+            )}
+          </p>
+          {(expenseSearchTerm || expenseFilterFarm || expenseFilterCategory || expenseFilterDateFrom || expenseFilterDateTo || expenseFilterAmountMin || expenseFilterAmountMax) && (
+            <button
+              onClick={() => {
+                setExpenseSearchTerm('')
+                setExpenseFilterFarm('')
+                setExpenseFilterCategory('')
+                setExpenseFilterDateFrom('')
+                setExpenseFilterDateTo('')
+                setExpenseFilterAmountMin('')
+                setExpenseFilterAmountMax('')
+              }}
+              className="text-primary hover:text-primary-dark text-sm font-medium"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Expenses Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredExpenses.map(expense => (
+            <div key={expense.id} className="expense-item">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <ApperIcon name="DollarSign" className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEdit('expense', expense)}
+                    className="p-2 text-surface-600 hover:text-primary transition-colors"
+                  >
+                    <ApperIcon name="Edit2" className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete('expense', expense.id)}
+                    className="p-2 text-surface-600 hover:text-red-500 transition-colors"
+                  >
+                    <ApperIcon name="Trash2" className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-1">
+                  ${expense.amount.toFixed(2)}
+                </h3>
+                <p className="text-surface-600 dark:text-surface-400 mb-2">{expense.description}</p>
+                <p className="text-sm text-surface-500 dark:text-surface-500">
+                  {getFarmName(expense.farmId)}
+                </p>
+              </div>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Category:</span>
+                  <span className="text-surface-900 dark:text-surface-100">{expense.category}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-600 dark:text-surface-400">Date:</span>
+                  <span className="text-surface-900 dark:text-surface-100">
+                    {format(new Date(expense.date), 'MMM dd, yyyy')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  expense.category === 'Seeds' || expense.category === 'Fertilizer' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                  expense.category === 'Equipment' || expense.category === 'Maintenance' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                  expense.category === 'Labor' || expense.category === 'Fuel' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                  'bg-surface-100 text-surface-800 dark:bg-surface-900 dark:text-surface-200'
+                }`}>
+                  {expense.category}
+                </span>
+                {expense.receipt && (
+                  <ApperIcon name="Paperclip" className="h-4 w-4 text-surface-400" title="Receipt attached" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredExpenses.length === 0 && (
+          <div className="text-center py-12">
+            <ApperIcon name="DollarSign" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
+              No expenses found
+            </h3>
+            <p className="text-surface-600 dark:text-surface-400 mb-4">
+              {expenseSearchTerm || expenseFilterFarm || expenseFilterCategory || expenseFilterDateFrom || expenseFilterDateTo || expenseFilterAmountMin || expenseFilterAmountMax
+                ? 'Try adjusting your search or filters'
+                : 'Start by adding your first expense'
+              }
+            </p>
+            {!(expenseSearchTerm || expenseFilterFarm || expenseFilterCategory || expenseFilterDateFrom || expenseFilterDateTo || expenseFilterAmountMin || expenseFilterAmountMax) && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn-primary"
+              >
+                Add Your First Expense
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add/Edit Expense Modal */}
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              >
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  {editingItem ? 'Edit Expense' : 'Add New Expense'}
+                </h3>
+                <div className="space-y-4">
+                  <select
+                    value={formData.farmId || ''}
+                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Farm</option>
+                    {farms.map(farm => (
+                      <option key={farm.id} value={farm.id}>{farm.name}</option>
+                    ))}
+                  </select>
+                  
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Amount"
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                    className="input-field"
+                  />
+                  
+                  <select
+                    value={formData.category || ''}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select Category</option>
+                    {expenseCategories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="input-field"
+                  />
+                  
+                  <input
+                    type="date"
+                    placeholder="Date"
+                    value={formData.date ? format(new Date(formData.date), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
+                    className="input-field"
+                  />
+                  
+                  <input
+                    type="text"
+                    placeholder="Receipt/Reference (optional)"
+                    value={formData.receipt || ''}
+                    onChange={(e) => setFormData({ ...formData, receipt: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => editingItem ? handleUpdate('expense') : handleAdd('expense')}
+                    className="btn-primary flex-1"
+                  >
+                    {editingItem ? 'Update' : 'Add'} Expense
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    )
+}
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1250,23 +1659,10 @@ const renderTasks = () => {
         return renderFarms()
       case 'crops':
         return renderCrops()
-return renderTasks()
+case 'tasks':
+        return renderTasks()
       case 'expenses':
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12"
-          >
-            <ApperIcon name="DollarSign" className="h-16 w-16 text-surface-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-2">
-              Expense Tracking
-            </h3>
-            <p className="text-surface-600 dark:text-surface-400">
-              Coming soon - Monitor and categorize your farm expenses
-            </p>
-          </motion.div>
-        )
+        return renderExpenses()
       case 'weather':
         return (
           <motion.div
