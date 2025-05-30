@@ -65,6 +65,13 @@ const MainFeature = ({ activeTab }) => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [formData, setFormData] = useState({})
+// Crops search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterFarm, setFilterFarm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterCropType, setFilterCropType] = useState('')
+  const [sortBy, setSortBy] = useState('plantingDate')
+  const [sortOrder, setSortOrder] = useState('desc')
 
   const resetForm = () => {
     setFormData({})
@@ -409,12 +416,6 @@ const MainFeature = ({ activeTab }) => {
   )
 
 const renderCrops = () => {
-    const [searchTerm, setSearchTerm] = useState('')
-    const [filterFarm, setFilterFarm] = useState('')
-    const [filterStatus, setFilterStatus] = useState('')
-    const [filterCropType, setFilterCropType] = useState('')
-    const [sortBy, setSortBy] = useState('plantingDate')
-    const [sortOrder, setSortOrder] = useState('desc')
 
     // Get farm name for a crop
     const getFarmName = (farmId) => {
