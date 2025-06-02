@@ -377,10 +377,9 @@ const [tasks, setTasks] = useState([
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md"
-            >
-              <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                 {editingItem ? 'Edit Farm' : 'Add New Farm'}
-</h3>
+              </h3>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="farm-name" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
@@ -1867,7 +1866,7 @@ case 'tasks':
   return (
     <div className="min-h-screen">
       {renderContent()}
-    </div>
+</div>
   )
 }
 
