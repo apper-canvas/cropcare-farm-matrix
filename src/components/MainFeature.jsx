@@ -95,15 +95,17 @@ const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('')
   const [expenseSortOrder, setExpenseSortOrder] = useState('desc')
 
   // Reports state
-  const [reportDateFrom, setReportDateFrom] = useState(format(addDays(new Date(), -30), 'yyyy-MM-dd'))
+const [reportDateFrom, setReportDateFrom] = useState(format(addDays(new Date(), -30), 'yyyy-MM-dd'))
   const [reportDateTo, setReportDateTo] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [reportFarmFilter, setReportFarmFilter] = useState('')
   const [reportType, setReportType] = useState('summary')
+
+  // Reset form function
+  const resetForm = () => {
     setFormData({})
     setEditingItem(null)
     setShowAddForm(false)
   }
-
   const handleAdd = (type) => {
     const newItem = {
       id: Date.now().toString(),
