@@ -1996,10 +1996,16 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
     )
 }
 
-  const renderReports = () => {
+const renderReports = () => {
     const profitLossData = calculateProfitLoss(reportDateFrom, reportDateTo, reportFarmFilter)
     const expenseChartData = getExpenseChartData(profitLossData.expenseByCategory)
     const profitTrendData = getProfitTrendData()
+    
+    // Add expense report data
+    const [expenseReportCategory, setExpenseReportCategory] = useState('')
+    const expenseReportData = generateExpenseReport(reportDateFrom, reportDateTo, reportFarmFilter, expenseReportCategory)
+    const expenseTrendChart = getExpenseTrendChartData(expenseReportData.monthlyExpenses)
+    const expenseCategoryChart = getExpenseCategoryBarChart(expenseReportData.expenseByCategory)
 
     const exportReport = () => {
       const reportData = {
@@ -2028,19 +2034,41 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
         className="space-y-6"
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">Profit & Loss Reports</h2>
-          <button
-            onClick={exportReport}
-            className="export-btn flex items-center space-x-2"
-          >
-            <ApperIcon name="Download" className="h-4 w-4" />
-            <span>Export Report</span>
-          </button>
+          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+            {reportType === 'expenses' ? 'Expense Reports' : 'Profit & Loss Reports'}
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={exportReport}
+              className="export-btn flex items-center space-x-2"
+            >
+              <ApperIcon name="Download" className="h-4 w-4" />
+              <span>Export P&L</span>
+            </button>
+            {reportType === 'expenses' && (
+              <>
+                <button
+                  onClick={() => exportExpenseReport(expenseReportData, 'json')}
+                  className="export-btn flex items-center space-x-2"
+                >
+                  <ApperIcon name="FileText" className="h-4 w-4" />
+                  <span>Export JSON</span>
+                </button>
+                <button
+                  onClick={() => exportExpenseReport(expenseReportData, 'csv')}
+                  className="export-btn flex items-center space-x-2"
+                >
+                  <ApperIcon name="Download" className="h-4 w-4" />
+                  <span>Export CSV</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
         <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">From Date</label>
               <input
@@ -2072,6 +2100,27 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
                 ))}
               </select>
             </div>
+            {reportType === 'expenses' && (
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Category</label>
+                <select
+                  value={expenseReportCategory}
+                  onChange={(e) => setExpenseReportCategory(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Seeds">Seeds</option>
+                  <option value="Fertilizer">Fertilizer</option>
+                  <option value="Pesticides">Pesticides</option>
+                  <option value="Equipment">Equipment</option>
+                  <option value="Fuel">Fuel</option>
+                  <option value="Labor">Labor</option>
+                  <option value="Water">Water</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Report Type</label>
               <select
@@ -2079,171 +2128,326 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
                 onChange={(e) => setReportType(e.target.value)}
                 className="input-field"
               >
-                <option value="summary">Summary</option>
-                <option value="detailed">Detailed</option>
-                <option value="trends">Trends</option>
+                <option value="summary">P&L Summary</option>
+                <option value="detailed">P&L Detailed</option>
+                <option value="trends">P&L Trends</option>
+                <option value="expenses">Expense Reports</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="report-card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Revenue</h3>
-              <ApperIcon name="TrendingUp" className="h-5 w-5 text-green-500" />
-            </div>
-            <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
-              ${profitLossData.totalRevenue.toFixed(2)}
-            </p>
-          </div>
+        {reportType === 'expenses' ? (
+          <>
+            {/* Expense Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Expenses</h3>
+                  <ApperIcon name="DollarSign" className="h-5 w-5 text-red-500" />
+                </div>
+                <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+                  ${expenseReportData.totalExpenses.toFixed(2)}
+                </p>
+              </div>
 
-          <div className="report-card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Expenses</h3>
-              <ApperIcon name="TrendingDown" className="h-5 w-5 text-red-500" />
-            </div>
-            <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
-              ${profitLossData.totalExpenses.toFixed(2)}
-            </p>
-          </div>
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Average Expense</h3>
+                  <ApperIcon name="BarChart3" className="h-5 w-5 text-blue-500" />
+                </div>
+                <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+                  ${expenseReportData.averageExpense.toFixed(2)}
+                </p>
+              </div>
 
-          <div className="report-card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Net Profit</h3>
-              <ApperIcon name={profitLossData.netProfit >= 0 ? "TrendingUp" : "TrendingDown"} 
-                className={`h-5 w-5 ${profitLossData.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-            </div>
-            <p className={`text-2xl font-bold ${profitLossData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${profitLossData.netProfit.toFixed(2)}
-            </p>
-          </div>
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Highest Expense</h3>
+                  <ApperIcon name="TrendingUp" className="h-5 w-5 text-orange-500" />
+                </div>
+                <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+                  ${expenseReportData.highestExpense.toFixed(2)}
+                </p>
+              </div>
 
-          <div className="report-card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Profit Margin</h3>
-              <ApperIcon name="Percent" className="h-5 w-5 text-blue-500" />
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Top Category</h3>
+                  <ApperIcon name="PieChart" className="h-5 w-5 text-purple-500" />
+                </div>
+                <p className="text-lg font-bold text-surface-900 dark:text-surface-100">
+                  {expenseReportData.mostExpensiveCategory || 'N/A'}
+                </p>
+                <p className="text-sm text-surface-600 dark:text-surface-400">
+                  ${expenseReportData.expenseByCategory[expenseReportData.mostExpensiveCategory]?.toFixed(2) || '0.00'}
+                </p>
+              </div>
             </div>
-            <p className={`text-2xl font-bold ${profitLossData.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {profitLossData.profitMargin.toFixed(1)}%
-            </p>
-          </div>
-        </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Expense Breakdown Chart */}
-          <div className="chart-container">
-            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
-              Expense Breakdown
-            </h3>
-            {Object.keys(profitLossData.expenseByCategory).length > 0 ? (
-              <Chart
-                options={expenseChartData.options}
-                series={expenseChartData.series}
-                type="pie"
-                height={350}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-64 text-surface-500">
-                No expense data for selected period
+            {/* Expense Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Monthly Expense Trend */}
+              <div className="chart-container">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  Monthly Expense Trend
+                </h3>
+                {Object.keys(expenseReportData.monthlyExpenses).length > 0 ? (
+                  <Chart
+                    options={expenseTrendChart.options}
+                    series={expenseTrendChart.series}
+                    type="line"
+                    height={350}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-surface-500">
+                    No expense data for selected period
+                  </div>
+                )}
+              </div>
+
+              {/* Category Breakdown */}
+              <div className="chart-container">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  Expense by Category
+                </h3>
+                {Object.keys(expenseReportData.expenseByCategory).length > 0 ? (
+                  <Chart
+                    options={expenseCategoryChart.options}
+                    series={expenseCategoryChart.series}
+                    type="bar"
+                    height={350}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-surface-500">
+                    No expense data for selected period
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Farm-wise Expense Breakdown */}
+            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                Farm-wise Expense Breakdown
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(expenseReportData.expenseByFarm).map(([farmName, amount]) => (
+                  <div key={farmName} className="p-4 bg-surface-50 dark:bg-surface-700 rounded-xl">
+                    <h4 className="font-semibold text-surface-900 dark:text-surface-100 mb-2">{farmName}</h4>
+                    <p className="text-2xl font-bold text-red-600">${amount.toFixed(2)}</p>
+                    <p className="text-sm text-surface-600 dark:text-surface-400">
+                      {((amount / expenseReportData.totalExpenses) * 100).toFixed(1)}% of total
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Detailed Expense Table */}
+            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                Detailed Expense List ({expenseReportData.expenseCount} expenses)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-surface-200 dark:border-surface-700">
+                      <th className="text-left py-3 px-4 font-medium text-surface-900 dark:text-surface-100">Date</th>
+                      <th className="text-left py-3 px-4 font-medium text-surface-900 dark:text-surface-100">Farm</th>
+                      <th className="text-left py-3 px-4 font-medium text-surface-900 dark:text-surface-100">Category</th>
+                      <th className="text-left py-3 px-4 font-medium text-surface-900 dark:text-surface-100">Description</th>
+                      <th className="text-right py-3 px-4 font-medium text-surface-900 dark:text-surface-100">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="max-h-64 overflow-y-auto">
+                    {expenseReportData.filteredExpenses.map(expense => (
+                      <tr key={expense.id} className="border-b border-surface-100 dark:border-surface-800">
+                        <td className="py-3 px-4 text-surface-900 dark:text-surface-100">
+                          {format(new Date(expense.date), 'MMM dd, yyyy')}
+                        </td>
+                        <td className="py-3 px-4 text-surface-600 dark:text-surface-400">
+                          {farms.find(f => f.id === expense.farmId)?.name || 'Unknown'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {expense.category}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-surface-900 dark:text-surface-100">
+                          {expense.description}
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-red-600">
+                          ${expense.amount.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Profit & Loss Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Revenue</h3>
+                  <ApperIcon name="TrendingUp" className="h-5 w-5 text-green-500" />
+                </div>
+                <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+                  ${profitLossData.totalRevenue.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Expenses</h3>
+                  <ApperIcon name="TrendingDown" className="h-5 w-5 text-red-500" />
+                </div>
+                <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+                  ${profitLossData.totalExpenses.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Net Profit</h3>
+                  <ApperIcon name={profitLossData.netProfit >= 0 ? "TrendingUp" : "TrendingDown"} 
+                    className={`h-5 w-5 ${profitLossData.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                </div>
+                <p className={`text-2xl font-bold ${profitLossData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ${profitLossData.netProfit.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="report-card">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Profit Margin</h3>
+                  <ApperIcon name="Percent" className="h-5 w-5 text-blue-500" />
+                </div>
+                <p className={`text-2xl font-bold ${profitLossData.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {profitLossData.profitMargin.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Expense Breakdown Chart */}
+              <div className="chart-container">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  Expense Breakdown
+                </h3>
+                {Object.keys(profitLossData.expenseByCategory).length > 0 ? (
+                  <Chart
+                    options={expenseChartData.options}
+                    series={expenseChartData.series}
+                    type="pie"
+                    height={350}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-surface-500">
+                    No expense data for selected period
+                  </div>
+                )}
+              </div>
+
+              {/* Profit Trend Chart */}
+              <div className="chart-container">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  6-Month Profit Trend
+                </h3>
+                <Chart
+                  options={profitTrendData.options}
+                  series={profitTrendData.series}
+                  type="line"
+                  height={350}
+                />
+              </div>
+            </div>
+
+            {/* Detailed Tables */}
+            {reportType === 'detailed' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Expense Details */}
+                <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+                  <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                    Expense Details
+                  </h3>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {profitLossData.filteredExpenses.map(expense => (
+                      <div key={expense.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
+                        <div>
+                          <p className="font-medium text-surface-900 dark:text-surface-100">{expense.description}</p>
+                          <p className="text-sm text-surface-600 dark:text-surface-400">
+                            {expense.category} • {format(new Date(expense.date), 'MMM dd')}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-red-600">${expense.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Revenue Details */}
+                <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+                  <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                    Revenue Details
+                  </h3>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {profitLossData.filteredRevenue.map(rev => (
+                      <div key={rev.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
+                        <div>
+                          <p className="font-medium text-surface-900 dark:text-surface-100">{rev.cropType}</p>
+                          <p className="text-sm text-surface-600 dark:text-surface-400">
+                            {rev.yieldAmount} {rev.yieldUnit} @ ${rev.pricePerUnit}/{rev.yieldUnit} • {format(new Date(rev.harvestDate), 'MMM dd')}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-green-600">${rev.totalRevenue.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Profit Trend Chart */}
-          <div className="chart-container">
-            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
-              6-Month Profit Trend
-            </h3>
-            <Chart
-              options={profitTrendData.options}
-              series={profitTrendData.series}
-              type="line"
-              height={350}
-            />
-          </div>
-        </div>
-
-        {/* Detailed Tables */}
-        {reportType === 'detailed' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Expense Details */}
-            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
-                Expense Details
-              </h3>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {profitLossData.filteredExpenses.map(expense => (
-                  <div key={expense.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
-                    <div>
-                      <p className="font-medium text-surface-900 dark:text-surface-100">{expense.description}</p>
-                      <p className="text-sm text-surface-600 dark:text-surface-400">
-                        {expense.category} • {format(new Date(expense.date), 'MMM dd')}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-red-600">${expense.amount.toFixed(2)}</span>
-                  </div>
-                ))}
+            {/* Farm Comparison */}
+            {reportType === 'trends' && (
+              <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                  Farm Performance Comparison
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {farms.map(farm => {
+                    const farmData = calculateProfitLoss(reportDateFrom, reportDateTo, farm.id)
+                    return (
+                      <div key={farm.id} className="p-4 bg-surface-50 dark:bg-surface-700 rounded-xl">
+                        <h4 className="font-semibold text-surface-900 dark:text-surface-100 mb-2">{farm.name}</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-surface-600 dark:text-surface-400">Revenue:</span>
+                            <span className="text-green-600 font-medium">${farmData.totalRevenue.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-surface-600 dark:text-surface-400">Expenses:</span>
+                            <span className="text-red-600 font-medium">${farmData.totalExpenses.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between border-t border-surface-200 dark:border-surface-600 pt-2">
+                            <span className="text-surface-900 dark:text-surface-100 font-medium">Net Profit:</span>
+                            <span className={`font-semibold ${farmData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ${farmData.netProfit.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-
-            {/* Revenue Details */}
-            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
-                Revenue Details
-              </h3>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {profitLossData.filteredRevenue.map(rev => (
-                  <div key={rev.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
-                    <div>
-                      <p className="font-medium text-surface-900 dark:text-surface-100">{rev.cropType}</p>
-                      <p className="text-sm text-surface-600 dark:text-surface-400">
-                        {rev.yieldAmount} {rev.yieldUnit} @ ${rev.pricePerUnit}/{rev.yieldUnit} • {format(new Date(rev.harvestDate), 'MMM dd')}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-green-600">${rev.totalRevenue.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Farm Comparison */}
-        {reportType === 'trends' && (
-          <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
-            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
-              Farm Performance Comparison
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {farms.map(farm => {
-                const farmData = calculateProfitLoss(reportDateFrom, reportDateTo, farm.id)
-                return (
-                  <div key={farm.id} className="p-4 bg-surface-50 dark:bg-surface-700 rounded-xl">
-                    <h4 className="font-semibold text-surface-900 dark:text-surface-100 mb-2">{farm.name}</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-surface-600 dark:text-surface-400">Revenue:</span>
-                        <span className="text-green-600 font-medium">${farmData.totalRevenue.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-surface-600 dark:text-surface-400">Expenses:</span>
-                        <span className="text-red-600 font-medium">${farmData.totalExpenses.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-surface-200 dark:border-surface-600 pt-2">
-                        <span className="text-surface-900 dark:text-surface-100 font-medium">Net Profit:</span>
-                        <span className={`font-semibold ${farmData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ${farmData.netProfit.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+            )}
+          </>
         )}
       </motion.div>
     )
