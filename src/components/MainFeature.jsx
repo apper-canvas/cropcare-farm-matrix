@@ -1807,19 +1807,275 @@ const renderExpenses = () => {
         </AnimatePresence>
 </motion.div>
     )
+}
+
+  const renderReports = () => {
+    const profitLossData = calculateProfitLoss(reportDateFrom, reportDateTo, reportFarmFilter)
+    const expenseChartData = getExpenseChartData(profitLossData.expenseByCategory)
+    const profitTrendData = getProfitTrendData()
+
+    const exportReport = () => {
+      const reportData = {
+        period: `${format(new Date(reportDateFrom), 'MMM dd, yyyy')} - ${format(new Date(reportDateTo), 'MMM dd, yyyy')}`,
+        farm: reportFarmFilter ? farms.find(f => f.id === reportFarmFilter)?.name : 'All Farms',
+        summary: profitLossData,
+        generatedAt: new Date().toISOString()
+      }
+      
+      const dataStr = JSON.stringify(reportData, null, 2)
+      const dataBlob = new Blob([dataStr], { type: 'application/json' })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `profit-loss-report-${format(new Date(), 'yyyy-MM-dd')}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      
+      toast.success('Report exported successfully!')
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold text-surface-900 dark:text-surface-100">Profit & Loss Reports</h2>
+          <button
+            onClick={exportReport}
+            className="export-btn flex items-center space-x-2"
+          >
+            <ApperIcon name="Download" className="h-4 w-4" />
+            <span>Export Report</span>
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">From Date</label>
+              <input
+                type="date"
+                value={reportDateFrom}
+                onChange={(e) => setReportDateFrom(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">To Date</label>
+              <input
+                type="date"
+                value={reportDateTo}
+                onChange={(e) => setReportDateTo(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Farm</label>
+              <select
+                value={reportFarmFilter}
+                onChange={(e) => setReportFarmFilter(e.target.value)}
+                className="input-field"
+              >
+                <option value="">All Farms</option>
+                {farms.map(farm => (
+                  <option key={farm.id} value={farm.id}>{farm.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Report Type</label>
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className="input-field"
+              >
+                <option value="summary">Summary</option>
+                <option value="detailed">Detailed</option>
+                <option value="trends">Trends</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="report-card">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Revenue</h3>
+              <ApperIcon name="TrendingUp" className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+              ${profitLossData.totalRevenue.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="report-card">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Total Expenses</h3>
+              <ApperIcon name="TrendingDown" className="h-5 w-5 text-red-500" />
+            </div>
+            <p className="text-2xl font-bold text-surface-900 dark:text-surface-100">
+              ${profitLossData.totalExpenses.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="report-card">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Net Profit</h3>
+              <ApperIcon name={profitLossData.netProfit >= 0 ? "TrendingUp" : "TrendingDown"} 
+                className={`h-5 w-5 ${profitLossData.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            </div>
+            <p className={`text-2xl font-bold ${profitLossData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              ${profitLossData.netProfit.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="report-card">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400">Profit Margin</h3>
+              <ApperIcon name="Percent" className="h-5 w-5 text-blue-500" />
+            </div>
+            <p className={`text-2xl font-bold ${profitLossData.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {profitLossData.profitMargin.toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Expense Breakdown Chart */}
+          <div className="chart-container">
+            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+              Expense Breakdown
+            </h3>
+            {Object.keys(profitLossData.expenseByCategory).length > 0 ? (
+              <Chart
+                options={expenseChartData.options}
+                series={expenseChartData.series}
+                type="pie"
+                height={350}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64 text-surface-500">
+                No expense data for selected period
+              </div>
+            )}
+          </div>
+
+          {/* Profit Trend Chart */}
+          <div className="chart-container">
+            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+              6-Month Profit Trend
+            </h3>
+            <Chart
+              options={profitTrendData.options}
+              series={profitTrendData.series}
+              type="line"
+              height={350}
+            />
+          </div>
+        </div>
+
+        {/* Detailed Tables */}
+        {reportType === 'detailed' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Expense Details */}
+            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                Expense Details
+              </h3>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {profitLossData.filteredExpenses.map(expense => (
+                  <div key={expense.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
+                    <div>
+                      <p className="font-medium text-surface-900 dark:text-surface-100">{expense.description}</p>
+                      <p className="text-sm text-surface-600 dark:text-surface-400">
+                        {expense.category} • {format(new Date(expense.date), 'MMM dd')}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-red-600">${expense.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Revenue Details */}
+            <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                Revenue Details
+              </h3>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {profitLossData.filteredRevenue.map(rev => (
+                  <div key={rev.id} className="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-700 rounded-lg">
+                    <div>
+                      <p className="font-medium text-surface-900 dark:text-surface-100">{rev.cropType}</p>
+                      <p className="text-sm text-surface-600 dark:text-surface-400">
+                        {rev.yieldAmount} {rev.yieldUnit} @ ${rev.pricePerUnit}/{rev.yieldUnit} • {format(new Date(rev.harvestDate), 'MMM dd')}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-green-600">${rev.totalRevenue.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Farm Comparison */}
+        {reportType === 'trends' && (
+          <div className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6">
+            <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4">
+              Farm Performance Comparison
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {farms.map(farm => {
+                const farmData = calculateProfitLoss(reportDateFrom, reportDateTo, farm.id)
+                return (
+                  <div key={farm.id} className="p-4 bg-surface-50 dark:bg-surface-700 rounded-xl">
+                    <h4 className="font-semibold text-surface-900 dark:text-surface-100 mb-2">{farm.name}</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-surface-600 dark:text-surface-400">Revenue:</span>
+                        <span className="text-green-600 font-medium">${farmData.totalRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-surface-600 dark:text-surface-400">Expenses:</span>
+                        <span className="text-red-600 font-medium">${farmData.totalExpenses.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-surface-200 dark:border-surface-600 pt-2">
+                        <span className="text-surface-900 dark:text-surface-100 font-medium">Net Profit:</span>
+                        <span className={`font-semibold ${farmData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${farmData.netProfit.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </motion.div>
+    )
   }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboard()
       case 'farms':
         return renderFarms()
-case 'crops':
+      case 'crops':
         return renderCrops()
       case 'tasks':
         return renderTasks()
       case 'expenses':
         return renderExpenses()
+      case 'reports':
+        return renderReports()
       case 'weather':
         return (
           <motion.div

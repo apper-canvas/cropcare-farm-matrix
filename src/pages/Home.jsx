@@ -5,12 +5,13 @@ import ApperIcon from '../components/ApperIcon'
 const Home = () => {
   const [activeTab, setActiveTab] = useState('dashboard')
 
-  const tabs = [
+const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: 'BarChart3' },
     { id: 'farms', name: 'Farms', icon: 'MapPin' },
     { id: 'crops', name: 'Crops', icon: 'Wheat' },
     { id: 'tasks', name: 'Tasks', icon: 'CheckSquare' },
     { id: 'expenses', name: 'Expenses', icon: 'DollarSign' },
+    { id: 'reports', name: 'Reports', icon: 'TrendingUp' },
     { id: 'weather', name: 'Weather', icon: 'Cloud' }
   ]
 
