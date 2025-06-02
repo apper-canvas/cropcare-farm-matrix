@@ -92,13 +92,14 @@ const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('')
   const [expenseFilterAmountMin, setExpenseFilterAmountMin] = useState('')
   const [expenseFilterAmountMax, setExpenseFilterAmountMax] = useState('')
   const [expenseSortBy, setExpenseSortBy] = useState('date')
-  const [expenseSortOrder, setExpenseSortOrder] = useState('desc')
+const [expenseSortOrder, setExpenseSortOrder] = useState('desc')
 
   // Reports state
 const [reportDateFrom, setReportDateFrom] = useState(format(addDays(new Date(), -30), 'yyyy-MM-dd'))
   const [reportDateTo, setReportDateTo] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [reportFarmFilter, setReportFarmFilter] = useState('')
   const [reportType, setReportType] = useState('summary')
+  const [expenseReportCategory, setExpenseReportCategory] = useState('')
 
   // Reset form function
   const resetForm = () => {
@@ -731,7 +732,7 @@ const renderCrops = () => {
                   placeholder="Search crops, varieties, farms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-field pl-10"
+className="input-field pl-10"
                 />
               </div>
             </div>
@@ -1208,7 +1209,7 @@ const priorityOptions = ['Low', 'Medium', 'High']
             >
               <option value="">All Types</option>
               {taskTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+<option key={type} value={type}>{type}</option>
               ))}
             </select>
 
@@ -1502,13 +1503,13 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
                       onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
                       className="input-field"
                     >
-                      {taskTypes.map(type => (
+{taskTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
 </select>
                   </div>
                   
-                  <div>
+<div>
                     <label htmlFor="task-status" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
                       Status
                     </label>
@@ -1554,12 +1555,13 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
                   </button>
                 </div>
               </motion.div>
-            </motion.div>
+</motion.div>
           )}
         </AnimatePresence>
-</motion.div>
+      </motion.div>
     )
   }
+
 const renderExpenses = () => {
     // Get farm name for an expense
     const getFarmName = (farmId) => {
@@ -1690,8 +1692,7 @@ const renderExpenses = () => {
                 className="input-field"
               />
             </div>
-
-            {/* Date To */}
+{/* Date To */}
             <div>
               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">To Date</label>
               <input
@@ -1988,25 +1989,23 @@ className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w
                     Cancel
                   </button>
                 </div>
-              </motion.div>
+</motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-</motion.div>
+      </motion.div>
     )
-}
+  }
 
 const renderReports = () => {
     const profitLossData = calculateProfitLoss(reportDateFrom, reportDateTo, reportFarmFilter)
-    const expenseChartData = getExpenseChartData(profitLossData.expenseByCategory)
+const expenseChartData = getExpenseChartData(profitLossData.expenseByCategory)
     const profitTrendData = getProfitTrendData()
     
     // Add expense report data
-    const [expenseReportCategory, setExpenseReportCategory] = useState('')
     const expenseReportData = generateExpenseReport(reportDateFrom, reportDateTo, reportFarmFilter, expenseReportCategory)
     const expenseTrendChart = getExpenseTrendChartData(expenseReportData.monthlyExpenses)
     const expenseCategoryChart = getExpenseCategoryBarChart(expenseReportData.expenseByCategory)
-
     const exportReport = () => {
       const reportData = {
         period: `${format(new Date(reportDateFrom), 'MMM dd, yyyy')} - ${format(new Date(reportDateTo), 'MMM dd, yyyy')}`,
@@ -2445,12 +2444,184 @@ const renderReports = () => {
                     )
                   })}
                 </div>
-              </div>
+</div>
             )}
           </>
         )}
       </motion.div>
     )
+  }
+
+  // Add missing functions for expense reports
+  const generateExpenseReport = (dateFrom, dateTo, farmFilter = '', categoryFilter = '') => {
+    const fromDate = new Date(dateFrom)
+    const toDate = new Date(dateTo)
+    
+    const filteredExpenses = expenses.filter(expense => {
+      const expenseDate = new Date(expense.date)
+      const matchesDate = expenseDate >= fromDate && expenseDate <= toDate
+      const matchesFarm = !farmFilter || expense.farmId === farmFilter
+      const matchesCategory = !categoryFilter || expense.category === categoryFilter
+      return matchesDate && matchesFarm && matchesCategory
+    })
+    
+    const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    const averageExpense = filteredExpenses.length > 0 ? totalExpenses / filteredExpenses.length : 0
+    const highestExpense = filteredExpenses.length > 0 ? Math.max(...filteredExpenses.map(e => e.amount)) : 0
+    
+    const expenseByCategory = filteredExpenses.reduce((acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + expense.amount
+      return acc
+    }, {})
+    
+    const expenseByFarm = filteredExpenses.reduce((acc, expense) => {
+      const farmName = farms.find(f => f.id === expense.farmId)?.name || 'Unknown Farm'
+      acc[farmName] = (acc[farmName] || 0) + expense.amount
+      return acc
+    }, {})
+    
+    const monthlyExpenses = filteredExpenses.reduce((acc, expense) => {
+      const monthKey = format(new Date(expense.date), 'yyyy-MM')
+      acc[monthKey] = (acc[monthKey] || 0) + expense.amount
+      return acc
+    }, {})
+    
+    const mostExpensiveCategory = Object.keys(expenseByCategory).reduce((a, b) => 
+      expenseByCategory[a] > expenseByCategory[b] ? a : b, ''
+    )
+    
+    return {
+      filteredExpenses,
+      totalExpenses,
+      averageExpense,
+      highestExpense,
+      expenseByCategory,
+      expenseByFarm,
+      monthlyExpenses,
+      mostExpensiveCategory,
+      expenseCount: filteredExpenses.length
+    }
+  }
+  
+  const getExpenseTrendChartData = (monthlyExpenses) => {
+    const months = Object.keys(monthlyExpenses).sort()
+    const amounts = months.map(month => monthlyExpenses[month])
+    
+    return {
+      series: [{
+        name: 'Monthly Expenses',
+        data: amounts
+      }],
+      options: {
+        chart: {
+          type: 'line',
+          background: 'transparent',
+          toolbar: { show: false }
+        },
+        xaxis: {
+          categories: months.map(month => format(new Date(month + '-01'), 'MMM yyyy'))
+        },
+        yaxis: {
+          labels: {
+            formatter: function (val) {
+              return '$' + val.toFixed(0)
+            }
+          }
+        },
+        colors: ['#ef4444'],
+        stroke: { curve: 'smooth', width: 3 },
+        markers: { size: 6 },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return '$' + val.toFixed(2)
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  const getExpenseCategoryBarChart = (expenseByCategory) => {
+    const categories = Object.keys(expenseByCategory)
+    const amounts = Object.values(expenseByCategory)
+    
+    return {
+      series: [{
+        name: 'Expenses',
+        data: amounts
+      }],
+      options: {
+        chart: {
+          type: 'bar',
+          background: 'transparent',
+          toolbar: { show: false }
+        },
+        xaxis: {
+          categories: categories
+        },
+        yaxis: {
+          labels: {
+            formatter: function (val) {
+              return '$' + val.toFixed(0)
+            }
+          }
+        },
+        colors: ['#3b82f6'],
+        dataLabels: {
+          enabled: true,
+          formatter: function (val) {
+            return '$' + val.toFixed(0)
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return '$' + val.toFixed(2)
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  const exportExpenseReport = (expenseData, format) => {
+    if (format === 'json') {
+      const reportData = {
+        period: `${format(new Date(reportDateFrom), 'MMM dd, yyyy')} - ${format(new Date(reportDateTo), 'MMM dd, yyyy')}`,
+        farm: reportFarmFilter ? farms.find(f => f.id === reportFarmFilter)?.name : 'All Farms',
+        category: expenseReportCategory || 'All Categories',
+        summary: expenseData,
+        generatedAt: new Date().toISOString()
+      }
+      
+      const dataStr = JSON.stringify(reportData, null, 2)
+      const dataBlob = new Blob([dataStr], { type: 'application/json' })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `expense-report-${format(new Date(), 'yyyy-MM-dd')}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      
+      toast.success('Expense report exported as JSON!')
+    } else if (format === 'csv') {
+      const csvHeader = 'Date,Farm,Category,Description,Amount\n'
+      const csvData = expenseData.filteredExpenses.map(expense => 
+        `${format(new Date(expense.date), 'yyyy-MM-dd')},${farms.find(f => f.id === expense.farmId)?.name || 'Unknown'},${expense.category},"${expense.description}",${expense.amount}`
+      ).join('\n')
+      
+      const csvContent = csvHeader + csvData
+      const dataBlob = new Blob([csvContent], { type: 'text/csv' })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `expense-report-${format(new Date(), 'yyyy-MM-dd')}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+      
+      toast.success('Expense report exported as CSV!')
+    }
   }
 
   const renderContent = () => {
@@ -2507,9 +2678,9 @@ const renderReports = () => {
       default:
         return renderDashboard()
     }
-  }
+}
 
-return (
+  return (
     <div className="min-h-screen">
       {renderContent()}
     </div>
