@@ -379,38 +379,62 @@ const MainFeature = ({ activeTab }) => {
             >
               <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                 {editingItem ? 'Edit Farm' : 'Add New Farm'}
-              </h3>
+</h3>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Farm Name"
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field"
-                />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  value={formData.location || ''}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="input-field"
-                />
-                <div className="flex space-x-3">
+                <div>
+                  <label htmlFor="farm-name" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Farm Name
+                  </label>
                   <input
-                    type="number"
-                    placeholder="Size"
-                    value={formData.size || ''}
-                    onChange={(e) => setFormData({ ...formData, size: parseFloat(e.target.value) })}
-                    className="input-field flex-1"
+                    id="farm-name"
+                    type="text"
+                    placeholder="Farm Name"
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input-field"
                   />
-                  <select
-                    value={formData.sizeUnit || 'acres'}
-                    onChange={(e) => setFormData({ ...formData, sizeUnit: e.target.value })}
-                    className="input-field w-24"
-                  >
-                    <option value="acres">Acres</option>
-                    <option value="hectares">Hectares</option>
-                  </select>
+                </div>
+                <div>
+                  <label htmlFor="farm-location" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Location
+                  </label>
+                  <input
+                    id="farm-location"
+                    type="text"
+                    placeholder="Location"
+                    value={formData.location || ''}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <div className="flex-1">
+                    <label htmlFor="farm-size" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Size
+                    </label>
+                    <input
+                      id="farm-size"
+                      type="number"
+                      placeholder="Size"
+                      value={formData.size || ''}
+                      onChange={(e) => setFormData({ ...formData, size: parseFloat(e.target.value) })}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farm-size-unit" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Unit
+                    </label>
+                    <select
+                      id="farm-size-unit"
+                      value={formData.sizeUnit || 'acres'}
+                      onChange={(e) => setFormData({ ...formData, sizeUnit: e.target.value })}
+                      className="input-field w-24"
+                    >
+                      <option value="acres">Acres</option>
+                      <option value="hectares">Hectares</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div className="flex space-x-3 mt-6">
@@ -711,70 +735,110 @@ const renderCrops = () => {
               >
                 <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Crop' : 'Add New Crop'}
-                </h3>
+</h3>
                 <div className="space-y-4">
-                  <select
-                    value={formData.farmId || ''}
-                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Farm</option>
-                    {farms.map(farm => (
-                      <option key={farm.id} value={farm.id}>{farm.name}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="crop-farm" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Farm
+                    </label>
+                    <select
+                      id="crop-farm"
+                      value={formData.farmId || ''}
+                      onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Farm</option>
+                      {farms.map(farm => (
+                        <option key={farm.id} value={farm.id}>{farm.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <select
-                    value={formData.cropType || ''}
-                    onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Crop Type</option>
-                    {cropTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="crop-type" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Crop Type
+                    </label>
+                    <select
+                      id="crop-type"
+                      value={formData.cropType || ''}
+                      onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Crop Type</option>
+                      {cropTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <input
-                    type="text"
-                    placeholder="Variety"
-                    value={formData.variety || ''}
-                    onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="crop-variety" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Variety
+                    </label>
+                    <input
+                      id="crop-variety"
+                      type="text"
+                      placeholder="Variety"
+                      value={formData.variety || ''}
+                      onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <input
-                    type="date"
-                    placeholder="Planting Date"
-                    value={formData.plantingDate ? format(new Date(formData.plantingDate), 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setFormData({ ...formData, plantingDate: new Date(e.target.value) })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="crop-planting-date" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Planting Date
+                    </label>
+                    <input
+                      id="crop-planting-date"
+                      type="date"
+                      value={formData.plantingDate ? format(new Date(formData.plantingDate), 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setFormData({ ...formData, plantingDate: new Date(e.target.value) })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <input
-                    type="date"
-                    placeholder="Expected Harvest Date"
-                    value={formData.expectedHarvestDate ? format(new Date(formData.expectedHarvestDate), 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setFormData({ ...formData, expectedHarvestDate: new Date(e.target.value) })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="crop-harvest-date" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Expected Harvest Date
+                    </label>
+                    <input
+                      id="crop-harvest-date"
+                      type="date"
+                      value={formData.expectedHarvestDate ? format(new Date(formData.expectedHarvestDate), 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setFormData({ ...formData, expectedHarvestDate: new Date(e.target.value) })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <select
-                    value={formData.status || 'Planted'}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="input-field"
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="crop-status" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Status
+                    </label>
+                    <select
+                      id="crop-status"
+                      value={formData.status || 'Planted'}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="input-field"
+                    >
+                      {statusOptions.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <textarea
-                    placeholder="Notes (optional)"
-                    value={formData.notes || ''}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="input-field h-20 resize-none"
-                  />
+                  <div>
+                    <label htmlFor="crop-notes" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Notes (optional)
+                    </label>
+                    <textarea
+                      id="crop-notes"
+                      placeholder="Notes (optional)"
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      className="input-field h-20 resize-none"
+                    />
+                  </div>
                 </div>
                 <div className="flex space-x-3 mt-6">
                   <button
@@ -1148,83 +1212,124 @@ const renderTasks = () => {
               >
                 <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Task' : 'Add New Task'}
-                </h3>
+</h3>
                 <div className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Task Title"
-                    value={formData.title || ''}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="task-title" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Task Title
+                    </label>
+                    <input
+                      id="task-title"
+                      type="text"
+                      placeholder="Task Title"
+                      value={formData.title || ''}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <textarea
-                    placeholder="Task Description"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input-field h-20 resize-none"
-                  />
+                  <div>
+                    <label htmlFor="task-description" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      id="task-description"
+                      placeholder="Task Description"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="input-field h-20 resize-none"
+                    />
+                  </div>
                   
-                  <select
-                    value={formData.farmId || ''}
-                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Farm</option>
-                    {farms.map(farm => (
-                      <option key={farm.id} value={farm.id}>{farm.name}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="task-farm" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Farm
+                    </label>
+                    <select
+                      id="task-farm"
+                      value={formData.farmId || ''}
+                      onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Farm</option>
+                      {farms.map(farm => (
+                        <option key={farm.id} value={farm.id}>{farm.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <select
-                    value={formData.cropId || ''}
-                    onChange={(e) => setFormData({ ...formData, cropId: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Crop (Optional)</option>
-                    {crops.filter(crop => !formData.farmId || crop.farmId === formData.farmId).map(crop => (
-                      <option key={crop.id} value={crop.id}>{crop.cropType} ({crop.variety})</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="task-crop" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Crop (Optional)
+                    </label>
+                    <select
+                      id="task-crop"
+                      value={formData.cropId || ''}
+                      onChange={(e) => setFormData({ ...formData, cropId: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Crop (Optional)</option>
+                      {crops.filter(crop => !formData.farmId || crop.farmId === formData.farmId).map(crop => (
+                        <option key={crop.id} value={crop.id}>{crop.cropType} ({crop.variety})</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <input
-                    type="date"
-                    placeholder="Due Date"
-                    value={formData.dueDate ? format(new Date(formData.dueDate), 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setFormData({ ...formData, dueDate: new Date(e.target.value) })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="task-due-date" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Due Date
+                    </label>
+                    <input
+                      id="task-due-date"
+                      type="date"
+                      value={formData.dueDate ? format(new Date(formData.dueDate), 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setFormData({ ...formData, dueDate: new Date(e.target.value) })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <select
-                    value={formData.priority || 'Medium'}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="input-field"
-                  >
-                    {priorityOptions.map(priority => (
-                      <option key={priority} value={priority}>{priority}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="task-priority" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Priority
+                    </label>
+                    <select
+                      id="task-priority"
+                      value={formData.priority || 'Medium'}
+                      onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                      className="input-field"
+                    >
+                      {priorityOptions.map(priority => (
+                        <option key={priority} value={priority}>{priority}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <select
-                    value={formData.taskType || 'Other'}
-                    onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
-                    className="input-field"
-                  >
-                    {taskTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="task-type" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Task Type
+                    </label>
+                    <select
+                      id="task-type"
+                      value={formData.taskType || 'Other'}
+                      onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
+                      className="input-field"
+                    >
+                      {taskTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                   
                   {editingItem && (
                     <div className="flex items-center space-x-3">
                       <input
                         type="checkbox"
-                        id="completed"
+                        id="task-completed"
                         checked={formData.completed || false}
                         onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
                         className="w-4 h-4 text-primary bg-surface-100 border-surface-300 rounded focus:ring-primary focus:ring-2"
                       />
-                      <label htmlFor="completed" className="text-surface-900 dark:text-surface-100">
+                      <label htmlFor="task-completed" className="text-surface-900 dark:text-surface-100">
                         Mark as completed
                       </label>
                     </div>
@@ -1574,62 +1679,97 @@ const renderExpenses = () => {
               >
                 <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Expense' : 'Add New Expense'}
-                </h3>
+</h3>
                 <div className="space-y-4">
-                  <select
-                    value={formData.farmId || ''}
-                    onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Farm</option>
-                    {farms.map(farm => (
-                      <option key={farm.id} value={farm.id}>{farm.name}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="expense-farm" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Farm
+                    </label>
+                    <select
+                      id="expense-farm"
+                      value={formData.farmId || ''}
+                      onChange={(e) => setFormData({ ...formData, farmId: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Farm</option>
+                      {farms.map(farm => (
+                        <option key={farm.id} value={farm.id}>{farm.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Amount"
-                    value={formData.amount || ''}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="expense-amount" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Amount
+                    </label>
+                    <input
+                      id="expense-amount"
+                      type="number"
+                      step="0.01"
+                      placeholder="Amount"
+                      value={formData.amount || ''}
+                      onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <select
-                    value={formData.category || ''}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="input-field"
-                  >
-                    <option value="">Select Category</option>
-                    {expenseCategories.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label htmlFor="expense-category" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Category
+                    </label>
+                    <select
+                      id="expense-category"
+                      value={formData.category || ''}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="">Select Category</option>
+                      {expenseCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
                   
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="expense-description" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Description
+                    </label>
+                    <input
+                      id="expense-description"
+                      type="text"
+                      placeholder="Description"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <input
-                    type="date"
-                    placeholder="Date"
-                    value={formData.date ? format(new Date(formData.date), 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="expense-date" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Date
+                    </label>
+                    <input
+                      id="expense-date"
+                      type="date"
+                      value={formData.date ? format(new Date(formData.date), 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
+                      className="input-field"
+                    />
+                  </div>
                   
-                  <input
-                    type="text"
-                    placeholder="Receipt/Reference (optional)"
-                    value={formData.receipt || ''}
-                    onChange={(e) => setFormData({ ...formData, receipt: e.target.value })}
-                    className="input-field"
-                  />
+                  <div>
+                    <label htmlFor="expense-receipt" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Receipt/Reference (optional)
+                    </label>
+                    <input
+                      id="expense-receipt"
+                      type="text"
+                      placeholder="Receipt/Reference (optional)"
+                      value={formData.receipt || ''}
+                      onChange={(e) => setFormData({ ...formData, receipt: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
                 </div>
                 <div className="flex space-x-3 mt-6">
                   <button
