@@ -23,7 +23,7 @@ const MainFeature = ({ activeTab }) => {
     }
   ])
   
-  const [tasks, setTasks] = useState([
+const [tasks, setTasks] = useState([
     {
       id: '1',
       farmId: '1',
@@ -33,7 +33,8 @@ const MainFeature = ({ activeTab }) => {
       dueDate: new Date(),
       priority: 'High',
       completed: false,
-      taskType: 'Maintenance'
+      taskType: 'Maintenance',
+      status: 'Not Started'
     }
   ])
   
@@ -925,9 +926,9 @@ const renderTasks = () => {
       }
     })
 
-    const priorityOptions = ['Low', 'Medium', 'High']
+const priorityOptions = ['Low', 'Medium', 'High']
     const taskTypes = ['Planting', 'Watering', 'Fertilizing', 'Pest Control', 'Harvesting', 'Maintenance', 'Monitoring', 'Other']
-
+    const statusOptions = ['Not Started', 'In Progress', 'Completed', 'On Hold']
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1316,6 +1317,22 @@ const renderTasks = () => {
                     >
                       {taskTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+</div>
+                  
+                  <div>
+                    <label htmlFor="task-status" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Status
+                    </label>
+                    <select
+                      id="task-status"
+                      value={formData.status || 'Not Started'}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="input-field"
+                    >
+                      {statusOptions.map(status => (
+                        <option key={status} value={status}>{status}</option>
                       ))}
                     </select>
                   </div>
