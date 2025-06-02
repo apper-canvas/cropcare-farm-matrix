@@ -372,12 +372,13 @@ const [tasks, setTasks] = useState([
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           >
-            <motion.div
+<motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md"
-<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+            >
+              <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                 {editingItem ? 'Edit Farm' : 'Add New Farm'}
               </h3>
               <div className="space-y-4">
@@ -733,9 +734,9 @@ const renderCrops = () => {
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Crop' : 'Add New Crop'}
-</h3>
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="crop-farm" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
@@ -1210,9 +1211,9 @@ const priorityOptions = ['Low', 'Medium', 'High']
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Task' : 'Add New Task'}
-</h3>
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="task-title" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
@@ -1317,8 +1318,8 @@ const priorityOptions = ['Low', 'Medium', 'High']
                       {taskTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
-                    </select>
-</div>
+</select>
+                  </div>
                   
                   <div>
                     <label htmlFor="task-status" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
@@ -1369,10 +1370,9 @@ const priorityOptions = ['Low', 'Medium', 'High']
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+</motion.div>
     )
-}
-
+  }
 const renderExpenses = () => {
     // Get farm name for an expense
     const getFarmName = (farmId) => {
@@ -1693,9 +1693,9 @@ const renderExpenses = () => {
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Expense' : 'Add New Expense'}
-</h3>
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="expense-farm" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
@@ -1805,19 +1805,18 @@ const renderExpenses = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+</motion.div>
     )
-}
-
+  }
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboard()
       case 'farms':
         return renderFarms()
-      case 'crops':
+case 'crops':
         return renderCrops()
-case 'tasks':
+      case 'tasks':
         return renderTasks()
       case 'expenses':
         return renderExpenses()
@@ -1863,10 +1862,10 @@ case 'tasks':
     }
   }
 
-  return (
+return (
     <div className="min-h-screen">
       {renderContent()}
-</div>
+    </div>
   )
 }
 
