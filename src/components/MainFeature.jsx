@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-toastify'
 import { format, addDays, parseISO } from 'date-fns'
 import ApperIcon from './ApperIcon'
-
+import Chart from 'react-apexcharts'
 const MainFeature = ({ activeTab }) => {
   // Sample data and state management
   const [farms, setFarms] = useState([
@@ -87,13 +87,18 @@ const [tasks, setTasks] = useState([
   const [expenseSearchTerm, setExpenseSearchTerm] = useState('')
   const [expenseFilterFarm, setExpenseFilterFarm] = useState('')
   const [expenseFilterCategory, setExpenseFilterCategory] = useState('')
-  const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('')
+const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('')
   const [expenseFilterDateTo, setExpenseFilterDateTo] = useState('')
   const [expenseFilterAmountMin, setExpenseFilterAmountMin] = useState('')
   const [expenseFilterAmountMax, setExpenseFilterAmountMax] = useState('')
   const [expenseSortBy, setExpenseSortBy] = useState('date')
   const [expenseSortOrder, setExpenseSortOrder] = useState('desc')
-  const resetForm = () => {
+
+  // Reports state
+  const [reportDateFrom, setReportDateFrom] = useState(format(addDays(new Date(), -30), 'yyyy-MM-dd'))
+  const [reportDateTo, setReportDateTo] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [reportFarmFilter, setReportFarmFilter] = useState('')
+  const [reportType, setReportType] = useState('summary')
     setFormData({})
     setEditingItem(null)
     setShowAddForm(false)
@@ -193,9 +198,189 @@ const [tasks, setTasks] = useState([
     totalFarms: farms.length,
     totalCrops: crops.length,
     pendingTasks: tasks.filter(t => !t.completed).length,
-    totalExpenses: expenses.reduce((sum, exp) => sum + exp.amount, 0)
+totalExpenses: expenses.reduce((sum, exp) => sum + exp.amount, 0)
   }
 
+  // Profit/Loss calculation functions
+  const calculateProfitLoss = (dateFrom, dateTo, farmFilter = '') => {
+    const fromDate = new Date(dateFrom)
+    const toDate = new Date(dateTo)
+    
+    // Filter expenses by date range and farm
+    const filteredExpenses = expenses.filter(expense => {
+      const expenseDate = new Date(expense.date)
+      const matchesDate = expenseDate >= fromDate && expenseDate <= toDate
+      const matchesFarm = !farmFilter || expense.farmId === farmFilter
+      return matchesDate && matchesFarm
+    })
+    
+    // Calculate total expenses
+    const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    
+    // Estimate revenue from crops (using market prices and yields)
+    const marketPrices = {
+      'Corn': 6.50,      // per bushel
+      'Wheat': 8.20,     // per bushel  
+      'Soybeans': 14.80, // per bushel
+      'Rice': 12.50,     // per cwt
+      'Potatoes': 11.00, // per cwt
+      'Tomatoes': 85.00, // per cwt
+      'Carrots': 35.00,  // per cwt
+      'Lettuce': 45.00,  // per cwt
+      'Onions': 28.00,   // per cwt
+      'Peppers': 65.00   // per cwt
+    }
+    
+    const yieldEstimates = {
+      'Corn': 180,       // bushels per acre
+      'Wheat': 45,       // bushels per acre
+      'Soybeans': 50,    // bushels per acre
+      'Rice': 70,        // cwt per acre
+      'Potatoes': 350,   // cwt per acre
+      'Tomatoes': 300,   // cwt per acre
+      'Carrots': 250,    // cwt per acre
+      'Lettuce': 200,    // cwt per acre
+      'Onions': 400,     // cwt per acre
+      'Peppers': 180     // cwt per acre
+    }
+    
+    // Filter crops by date range and farm, estimate revenue
+    const filteredRevenue = crops.filter(crop => {
+      const harvestDate = new Date(crop.expectedHarvestDate)
+      const matchesDate = harvestDate >= fromDate && harvestDate <= toDate
+      const matchesFarm = !farmFilter || crop.farmId === farmFilter
+      const isHarvested = crop.status === 'Harvested' || harvestDate <= new Date()
+      return matchesDate && matchesFarm && isHarvested
+    }).map(crop => {
+      const farm = farms.find(f => f.id === crop.farmId)
+      const farmSize = farm ? farm.size : 1
+      const pricePerUnit = marketPrices[crop.cropType] || 10
+      const yieldPerAcre = yieldEstimates[crop.cropType] || 50
+      const totalYield = farmSize * yieldPerAcre
+      const totalRevenue = totalYield * pricePerUnit
+      
+      return {
+        id: crop.id,
+        cropType: crop.cropType,
+        farmSize,
+        yieldAmount: totalYield,
+        yieldUnit: crop.cropType === 'Rice' || crop.cropType === 'Potatoes' || crop.cropType === 'Tomatoes' || crop.cropType === 'Carrots' || crop.cropType === 'Lettuce' || crop.cropType === 'Onions' || crop.cropType === 'Peppers' ? 'cwt' : 'bushels',
+        pricePerUnit,
+        totalRevenue,
+        harvestDate: crop.expectedHarvestDate
+      }
+    })
+    
+    const totalRevenue = filteredRevenue.reduce((sum, rev) => sum + rev.totalRevenue, 0)
+    const netProfit = totalRevenue - totalExpenses
+    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
+    
+    // Group expenses by category
+    const expenseByCategory = filteredExpenses.reduce((acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + expense.amount
+      return acc
+    }, {})
+    
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit,
+      profitMargin,
+      expenseByCategory,
+      filteredExpenses,
+      filteredRevenue
+    }
+  }
+  
+  const getExpenseChartData = (expenseByCategory) => {
+    const categories = Object.keys(expenseByCategory)
+    const amounts = Object.values(expenseByCategory)
+    
+    return {
+      series: amounts,
+      options: {
+        chart: {
+          type: 'pie',
+          background: 'transparent'
+        },
+        labels: categories,
+        colors: ['#16a34a', '#eab308', '#f97316', '#3b82f6', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#f59e0b', '#ec4899'],
+        legend: {
+          position: 'bottom'
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: function (val, opts) {
+            return opts.w.config.series[opts.seriesIndex].toFixed(0)
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return '$' + val.toFixed(2)
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  const getProfitTrendData = () => {
+    // Generate 6 months of sample profit data
+    const months = []
+    const profits = []
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = addDays(new Date(), -30 * i)
+      const monthStart = format(new Date(date.getFullYear(), date.getMonth(), 1), 'yyyy-MM-dd')
+      const monthEnd = format(new Date(date.getFullYear(), date.getMonth() + 1, 0), 'yyyy-MM-dd')
+      
+      const monthData = calculateProfitLoss(monthStart, monthEnd)
+      months.push(format(date, 'MMM yyyy'))
+      profits.push(monthData.netProfit)
+    }
+    
+    return {
+      series: [{
+        name: 'Net Profit',
+        data: profits
+      }],
+      options: {
+        chart: {
+          type: 'line',
+          background: 'transparent',
+          toolbar: {
+            show: false
+          }
+        },
+        xaxis: {
+          categories: months
+        },
+        yaxis: {
+          labels: {
+            formatter: function (val) {
+              return '$' + val.toFixed(0)
+            }
+          }
+        },
+        colors: ['#16a34a'],
+        stroke: {
+          curve: 'smooth',
+          width: 3
+        },
+        markers: {
+          size: 6
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return '$' + val.toFixed(2)
+            }
+          }
+        }
+      }
+    }
+  }
   const renderDashboard = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -732,9 +917,9 @@ const renderCrops = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Crop' : 'Add New Crop'}
                 </h3>
                 <div className="space-y-4">
@@ -1209,9 +1394,9 @@ const priorityOptions = ['Low', 'Medium', 'High']
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Task' : 'Add New Task'}
                 </h3>
                 <div className="space-y-4">
@@ -1691,9 +1876,9 @@ const renderExpenses = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+className="bg-white dark:bg-surface-800 rounded-2xl shadow-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               >
-<h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
+                <h3 className="text-xl font-semibold text-surface-900 dark:text-surface-100 mb-4">
                   {editingItem ? 'Edit Expense' : 'Add New Expense'}
                 </h3>
                 <div className="space-y-4">
